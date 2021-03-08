@@ -1,0 +1,102 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!687078895 &4343727234628468602
+SpriteAtlas:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Cards
+  m_EditorData:
+    serializedVersion: 2
+    textureSettings:
+      serializedVersion: 2
+      anisoLevel: 1
+      compressionQuality: 50
+      maxTextureSize: 2048
+      textureCompression: 0
+      filterMode: 1
+      generateMipMaps: 0
+      readable: 0
+      crunchedCompression: 0
+      sRGB: 1
+    platformSettings: []
+    packingSettings:
+      serializedVersion: 2
+      padding: 4
+      blockOffset: 1
+      allowAlphaSplitting: 0
+      enableRotation: 1
+      enableTightPacking: 1
+    variantMultiplier: 1
+    packables:
+    - {fileID: 102900000, guid: adb9e6a45329a1b49b4dd81b61f9b5d8, type: 3}
+    totalSpriteSurfaceArea: 1070961
+    bindAsDefault: 1
+  m_MasterAtlas: {fileID: 0}
+  m_PackedSprites:
+  - {fileID: 21300000, guid: f2b360409ef15534d95d77df0e534870, type: 3}
+  - {fileID: 21300000, guid: 888f5f90f49248f47941b28ed04dd703, type: 3}
+  - {fileID: 21300000, guid: d3026161acb9fa741b66d0249ce39688, type: 3}
+  - {fileID: 21300000, guid: 468a42f1fe951b74e896526a00682a95, type: 3}
+  - {fileID: 21300000, guid: 6d32f72262a43cc4790ef46be725ca2d, type: 3}
+  - {fileID: 21300000, guid: ec672e52ee35c084db097320254f8c04, type: 3}
+  - {fileID: 21300000, guid: 1c86f1c288e9d68488621c6e5bb42482, type: 3}
+  - {fileID: 21300000, guid: e081c8032592f95468449b60df8a13b1, type: 3}
+  - {fileID: 21300000, guid: c8a08323d4a19bd4d9ff75dd85d7c293, type: 3}
+  - {fileID: 21300000, guid: 0dc2073342c456948821bd7cf9455dbb, type: 3}
+  - {fileID: 21300000, guid: 1e631ad3a08cad84493af74f871df184, type: 3}
+  - {fileID: 21300000, guid: 703313f42b9453a478e0d79038f63fa6, type: 3}
+  - {fileID: 21300000, guid: b42e42f5a1b2c3749b879320744a7135, type: 3}
+  - {fileID: 21300000, guid: 35981f66266921d4ebf055cc24d51dce, type: 3}
+  - {fileID: 21300000, guid: f25b6f660ed8062429b253a37afb12bb, type: 3}
+  - {fileID: 21300000, guid: e9300307c67b7cd4cbe326d324f43877, type: 3}
+  - {fileID: 21300000, guid: 615a1387f698c254b948fd532c1bab3d, type: 3}
+  - {fileID: 21300000, guid: a70abd48ced5cb946b7f1408fbf9fc5f, type: 3}
+  - {fileID: 21300000, guid: 34b0c6e84dbd76b4087132fd563744dd, type: 3}
+  - {fileID: 21300000, guid: 31e0cae91b919994cbfa9229794dead2, type: 3}
+  - {fileID: 21300000, guid: 5538b45be969a3a4b9279ea3c4f45de1, type: 3}
+  - {fileID: 21300000, guid: 4699948bf51155041aedc037bf6a145e, type: 3}
+  - {fileID: 21300000, guid: bdd8dc9b4a3b8af49bc2b00dd472c53d, type: 3}
+  - {fileID: 21300000, guid: 54915e9b53a0e46428f4d5702a5fa4bd, type: 3}
+  - {fileID: 21300000, guid: b1fd1acb4cc2deb4d82fd8dc94e19ecb, type: 3}
+  - {fileID: 21300000, guid: 083a92fc8b2fbfd48b93d8dbd595eb0b, type: 3}
+  - {fileID: 21300000, guid: 0905d20e89fbad346831309d9234324d, type: 3}
+  - {fileID: 21300000, guid: 858d803efacf2ab4fa6cea63429921d9, type: 3}
+  - {fileID: 21300000, guid: 9b8b76ce8c051804e941e5b6181d9f74, type: 3}
+  - {fileID: 21300000, guid: 63651afe4976742499d197068d198efd, type: 3}
+  - {fileID: 21300000, guid: 954d6b8f7492c5649b3df96cf6379ab4, type: 3}
+  m_PackedSpriteNamesToIndex:
+  - cardSpadesA
+  - cardClubsJ
+  - cardHearts9
+  - cardBack_blue4
+  - cardDiamondsJ
+  - player
+  - Kate
+  - cardHeartsK
+  - Mom
+  - cardDiamonds9
+  - cardDiamondsQ
+  - cardHeartsQ
+  - cardClubsQ
+  - cardDiamonds10
+  - Trev
+  - cardSpadesK
+  - Black
+  - cardClubs9
+  - cardClubsK
+  - cardSpadesQ
+  - cardDiamondsK
+  - cardHearts10
+  - Dad
+  - cardHeartsJ
+  - cardSpades10
+  - cardHeartsA
+  - cardSpadesJ
+  - cardDiamondsA
+  - cardSpades9
+  - cardClubs10
+  - cardClubsA
+  m_Tag: Cards
+  m_IsVariant: 0
