@@ -2611,6 +2611,10 @@ MonoBehaviour:
   tempPlayer2Id: 
   tempPlayer3Id: 
   tempPlayer4Id: 
+  player1ready: 0
+  player2ready: 0
+  player3ready: 0
+  AllPlayersReady: 0
   gameState: 0
 --- !u!4 &807467449
 Transform:
@@ -6863,6 +6867,23 @@ MonoBehaviour:
             m_StringArgument: 
             m_BoolArgument: 0
           m_CallState: 2
+  - eventName: PlayerReady
+    Foldout: 1
+    target: 2
+    remoteEvent:
+      m_PersistentCalls:
+        m_Calls:
+        - m_Target: {fileID: 2096708596}
+          m_MethodName: OnPlayerReadyEvent
+          m_Mode: 1
+          m_Arguments:
+            m_ObjectArgument: {fileID: 0}
+            m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+            m_IntArgument: 0
+            m_FloatArgument: 0
+            m_StringArgument: 
+            m_BoolArgument: 0
+          m_CallState: 2
   AgentId: 1
 --- !u!114 &1852489193
 MonoBehaviour:
@@ -7745,6 +7766,20 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 807467448}
         m_MethodName: OnLeftRoom
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  OnPlayerReady:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 807467448}
+        m_MethodName: OnPlayerReady
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

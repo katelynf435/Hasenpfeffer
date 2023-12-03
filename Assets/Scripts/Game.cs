@@ -147,6 +147,16 @@ namespace Hasenpfeffer
         protected string tempPlayer3Id;
         [SerializeField]
         protected string tempPlayer4Id;
+        [SerializeField]
+        protected bool player1ready;
+        [SerializeField]
+        protected bool player2ready;
+        [SerializeField]
+        protected bool player3ready;
+        [SerializeField]
+        protected bool AllPlayersReady;
+        [SerializeField]
+        protected bool alreadyplayed;
 
         public enum GameState
         {
@@ -730,6 +740,7 @@ namespace Hasenpfeffer
             Team2Tricks.text = team2Tricks.ToString();
 
             SetTrumpString();
+            UnreadyPlayers();
 
             if (NetworkClient.Instance.IsHost)
             {
@@ -746,7 +757,6 @@ namespace Hasenpfeffer
 
                 netCode.ModifyGameData(gameDataManager.EncryptedData());
             }
-
         }
 
         public IEnumerator OnDealingCards()
@@ -923,7 +933,21 @@ namespace Hasenpfeffer
             {
                 actionCount = gameDataManager.GetActionCount();
 
-                if (actionCount < 4)
+                /*if (actionCount < 4)
+                {
+                    gameState = GameState.BidsStarted;
+                }*/
+                int check = 0;
+                Player[] playerAry = { localPlayer, remotePlayer1, remotePlayer2, remotePlayer3 };
+
+                foreach (Player player in playerAry)
+                {
+                    if (player.bid != "")
+                    {
+                        check++;
+                    }
+                }
+                if (check < 4)
                 {
                     gameState = GameState.BidsStarted;
                 }
@@ -943,6 +967,8 @@ namespace Hasenpfeffer
         {
             SetTrumpString();
             HideAllButtons();
+
+            alreadyplayed = false;
 
             if (NetworkClient.Instance.IsHost)
             {
@@ -985,7 +1011,6 @@ namespace Hasenpfeffer
                 SetMessage($"Waiting on {currentPlayer.PlayerName}.");
             }
 
-            playerToSkip = gameDataManager.GetPlayerToSkip();
             highBidPlayer = gameDataManager.GetHighBidPlayer();
 
             byte givenCard1 = gameDataManager.GetGivenCard(1);
@@ -1095,6 +1120,14 @@ namespace Hasenpfeffer
                 remotePlayer2.ResetAllCards(remotePlayer2);
                 remotePlayer3.ResetAllCards(remotePlayer3);
 
+                team1Score = gameDataManager.GetTeam1Score();
+                team2Score = gameDataManager.GetTeam2Score();
+
+                team1Tricks = gameDataManager.GetTeam1Tricks();
+                team2Tricks = gameDataManager.GetTeam2Tricks();
+                highBid = gameDataManager.GetHighBid();
+
+
                 if (NetworkClient.Instance.IsHost)
                 {
                     if (team1Score > 63 && gameDataManager.GetPlayerTeam(highBidPlayer.PlayerId) == 2 && ((team2Tricks < highBid && highBid < 16) || (team2Tricks < 12 && highBid > 12)))
@@ -1111,41 +1144,43 @@ namespace Hasenpfeffer
                         gameDataManager.SetGameState(gameState);
                         //netCode.ModifyGameData(gameDataManager.EncryptedData());
                     }
-
-                    scoreRound();
-
-                    gameDataManager.SetTeam1Score(team1Score);
-                    gameDataManager.SetTeam2Score(team2Score);
-
-                    if (team1Score > 63 && gameDataManager.GetPlayerTeam(highBidPlayer.PlayerId) == 1)
-                    {
-                        gameState = GameState.GameFinished;
-                        gameDataManager.SetWinnerTeam(1);
-                        gameDataManager.SetGameState(gameState);
-                        //netCode.ModifyGameData(gameDataManager.EncryptedData());
-                    }
-                    else if (team2Score > 63 && gameDataManager.GetPlayerTeam(highBidPlayer.PlayerId) == 2)
-                    {
-                        gameState = GameState.GameFinished;
-                        gameDataManager.SetWinnerTeam(2);
-                        gameDataManager.SetGameState(gameState);
-                        //netCode.ModifyGameData(gameDataManager.EncryptedData());
-                    }
                     else
                     {
-                        SwitchToNextDealer();
-                        currentPlayer = dealerPlayer;
+                        scoreRound();
 
-                        gameState = GameState.RoundStarted;
+                        gameDataManager.SetTeam1Score(team1Score);
+                        gameDataManager.SetTeam2Score(team2Score);
 
-                        gameDataManager.SetTeam1Tricks(0);
-                        gameDataManager.SetTeam2Tricks(0);
-                        gameDataManager.SetCurrentPlayer(currentPlayer);
-                        gameDataManager.SetGameState(gameState);
-                        gameDataManager.SetDealer(dealerPlayer);
+                        if (team1Score > 63 && gameDataManager.GetPlayerTeam(highBidPlayer.PlayerId) == 1)
+                        {
+                            gameState = GameState.GameFinished;
+                            gameDataManager.SetWinnerTeam(1);
+                            gameDataManager.SetGameState(gameState);
+                            //netCode.ModifyGameData(gameDataManager.EncryptedData());
+                        }
+                        else if (team2Score > 63 && gameDataManager.GetPlayerTeam(highBidPlayer.PlayerId) == 2)
+                        {
+                            gameState = GameState.GameFinished;
+                            gameDataManager.SetWinnerTeam(2);
+                            gameDataManager.SetGameState(gameState);
+                            //netCode.ModifyGameData(gameDataManager.EncryptedData());
+                        }
+                        else
+                        {
+                            SwitchToNextDealer();
+                            currentPlayer = dealerPlayer;
 
-                        ResetVariables();
+                            gameState = GameState.RoundStarted;
 
+                            gameDataManager.SetTeam1Tricks(0);
+                            gameDataManager.SetTeam2Tricks(0);
+                            gameDataManager.SetCurrentPlayer(currentPlayer);
+                            gameDataManager.SetGameState(gameState);
+                            gameDataManager.SetDealer(dealerPlayer);
+
+                            ResetVariables();
+
+                        }
                     }
                 }
 
@@ -1192,9 +1227,19 @@ namespace Hasenpfeffer
 
         protected void OnTurnSelectingCard()
         {
-            HideAllButtons();
-            SetTrumpString();
             handCount = gameDataManager.GetHandCount();
+
+            if (gameDataManager.PlayerCards(currentPlayer).Count == 1)
+            {
+                alreadyplayed = true;
+            }
+            else
+            {
+                alreadyplayed = false;
+            }
+
+            HideAllButtons();
+            SetTrumpString(); 
 
             if (handCount == 1)
             {
@@ -1216,7 +1261,7 @@ namespace Hasenpfeffer
 
             if (NetworkClient.Instance.IsHost)
             {
-                if (handCount == 11)
+                if (gameDataManager.PlayerCards(currentPlayer).Count == 1)
                 {
                     byte lastCard = gameDataManager.PlayerCards(currentPlayer).ElementAt(0);
                     Debug.Log(lastCard);
@@ -1357,6 +1402,8 @@ namespace Hasenpfeffer
                 gameDataManager.SetGameState(gameState);
 
                 netCode.ModifyGameData(gameDataManager.EncryptedData());
+
+                yield return StartCoroutine(CheckAllPlayersReady());
             }
         }
 
@@ -1379,6 +1426,27 @@ namespace Hasenpfeffer
         }
 
         //****************** Helper Methods *********************//
+
+        public void UnreadyPlayers()
+        {
+            Debug.Log("unready");
+            player1ready = false;
+            player2ready = false;
+            player3ready = false;
+            AllPlayersReady = false;
+        }
+
+        public IEnumerator CheckAllPlayersReady()
+        {
+            Debug.Log("CheckingPlayerStatus");
+            while (player1ready == false && player2ready == false && player3ready == false)
+            {
+                yield return null;
+            }
+
+            AllPlayersReady = true;
+        }
+
         public IEnumerator Sleep(float time)
         {
             yield return new WaitForSeconds(time);
@@ -1930,71 +1998,84 @@ namespace Hasenpfeffer
         public void OnSixSelected()
         {
             netCode.NotifyHostPlayerBidSelected(6);
+            HideAllButtons();
         }
 
         public void OnSevenSelected()
         {
             netCode.NotifyHostPlayerBidSelected(7);
+            HideAllButtons();
         }
 
         public void OnEightSelected()
         {
             netCode.NotifyHostPlayerBidSelected(8);
+            HideAllButtons();
         }
 
         public void OnNineSelected()
         {
             netCode.NotifyHostPlayerBidSelected(9);
+            HideAllButtons();
         }
 
         public void OnTenSelected()
         {
             netCode.NotifyHostPlayerBidSelected(10);
+            HideAllButtons();
         }
 
         public void OnHossSelected()
         {
             netCode.NotifyHostPlayerBidSelected(16);
+            HideAllButtons();
         }
 
         public void OnPfefferSelected()
         {
             netCode.NotifyHostPlayerBidSelected(32);
+            HideAllButtons();
         }
 
         public void OnPassSelected()
         {
             netCode.NotifyHostPlayerBidSelected(0);
+            HideAllButtons();
         }
 
         public void OnHeartsSelected()
         {
             trump = (int)Suits.Hearts;
             netCode.NotifyHostPlayerTrumpSelected(trump);
+            HideAllButtons();
         }
 
         public void OnClubsSelected()
         {
             trump = (int)Suits.Clubs;
             netCode.NotifyHostPlayerTrumpSelected(trump);
+            HideAllButtons();
         }
 
         public void OnDiamondsSelected()
         {
             trump = (int)Suits.Diamonds;
             netCode.NotifyHostPlayerTrumpSelected(trump);
+            HideAllButtons();
         }
 
         public void OnSpadesSelected()
         {
             trump = (int)Suits.Spades;
             netCode.NotifyHostPlayerTrumpSelected(trump);
+            HideAllButtons();
         }
 
         public void OnNoTrumpSelected()
         {
             trump = (int)Suits.NoTrump;
             netCode.NotifyHostPlayerTrumpSelected(trump);
+            HideAllButtons();
         }
 
         public void OnRedealSelected()
@@ -2008,124 +2089,103 @@ namespace Hasenpfeffer
 
         public void OnCardSelected(Card card)
         {
-            if (gameState == GameState.SelectCardsToGive)
+            if (alreadyplayed == false)
             {
-                if (card == givingCard1)
+                if (gameState == GameState.SelectCardsToGive)
                 {
-                    givingCard1.OnSelected(false);
-                    givingCard1 = null;
-                    givingCard1Rank = 0;
-                    givingCard1Suit = 0;
-                }
-                else if (card == givingCard2)
-                {
-                    givingCard2.OnSelected(false);
-                    givingCard2 = null;
-                    givingCard2Rank = 0;
-                    givingCard2Suit = 0;
-                }
-                else if (givingCard1 == null)
-                {
-                    givingCard1 = card;
-                    givingCard1Suit = (int)givingCard1.Suit;
-                    givingCard1Rank = (int)givingCard1.Rank;
-                    givingCard1.OnSelected(true);
-                }
-                else if (givingCard2 == null)
-                {
-                    givingCard2 = card;
-                    givingCard2Suit = (int)givingCard2.Suit;
-                    givingCard2Rank = (int)givingCard2.Rank;
-                    givingCard2.OnSelected(true);
-                }
-                else
-                {
-                    givingCard3 = card;
-                    givingCard3Suit = (int)givingCard3.Suit;
-                    givingCard3Rank = (int)givingCard3.Rank;
-                    givingCard3.OnSelected(true);
-                    netCode.NotifyHostPlayer3CardsSelected(givingCard1.byteValue, givingCard2.byteValue, givingCard3.byteValue);
-                }
-            }
-            else if (gameState == GameState.SelectCardsToRemove)
-            {
-                if (card == givingCard1)
-                {
-                    givingCard1.OnSelected(false);
-                    givingCard1 = null;
-                    givingCard1Rank = 0;
-                    givingCard1Suit = 0;
-
-                }
-                else if (card == givingCard2)
-                {
-                    givingCard2.OnSelected(false);
-                    givingCard2 = null;
-                    givingCard2Rank = 0;
-                    givingCard2Suit = 0;
-                }
-                else if (givingCard1 == null)
-                {
-                    givingCard1 = card;
-                    givingCard1Suit = (int)givingCard1.Suit;
-                    givingCard1Rank = (int)givingCard1.Rank;
-                    givingCard1.OnSelected(true);
-                }
-                else if (givingCard2 == null)
-                {
-                    givingCard2 = card;
-                    givingCard2Suit = (int)givingCard2.Suit;
-                    givingCard2Rank = (int)givingCard2.Rank;
-                    givingCard2.OnSelected(true);
-                }
-                else
-                {
-                    givingCard3 = card;
-                    givingCard3Suit = (int)givingCard3.Suit;
-                    givingCard3Rank = (int)givingCard3.Rank;
-                    givingCard3.OnSelected(true);
-                    netCode.NotifyHostPlayer3CardsSelected(givingCard1.byteValue, givingCard2.byteValue, givingCard3.byteValue);
-                }
-            }
-            else if (gameState == GameState.TurnSelectingCard)
-            {
-                actionCount = gameDataManager.GetActionCount();
-
-                if (card.OwnerId == currentPlayer.PlayerId)
-                {
-                    if (actionCount == 4 || actionCount == 0)
+                    if (card == givingCard1)
                     {
-                        if (selectedCard != null)
-                        {
-                            selectedCard.OnSelected(false);
-                            selectedSuit = 0;
-                            selectedRank = 0;
-                        }
-
-                        selectedCard = card;
-                        selectedSuit = (int)selectedCard.Suit;
-                        selectedRank = (int)selectedCard.Rank;
-                        netCode.NotifyHostPlayerCardPlayed(selectedCard.byteValue);
-                        selectedCard = null;
-                        SetMessage($"");
+                        givingCard1.OnSelected(false);
+                        givingCard1 = null;
+                        givingCard1Rank = 0;
+                        givingCard1Suit = 0;
+                    }
+                    else if (card == givingCard2)
+                    {
+                        givingCard2.OnSelected(false);
+                        givingCard2 = null;
+                        givingCard2Rank = 0;
+                        givingCard2Suit = 0;
+                    }
+                    else if (givingCard1 == null)
+                    {
+                        givingCard1 = card;
+                        givingCard1Suit = (int)givingCard1.Suit;
+                        givingCard1Rank = (int)givingCard1.Rank;
+                        givingCard1.OnSelected(true);
+                    }
+                    else if (givingCard2 == null)
+                    {
+                        givingCard2 = card;
+                        givingCard2Suit = (int)givingCard2.Suit;
+                        givingCard2Rank = (int)givingCard2.Rank;
+                        givingCard2.OnSelected(true);
                     }
                     else
                     {
-                        Debug.Log("not leading");
-                        ledSuit = gameDataManager.GetLedSuit();
-                        trump = gameDataManager.GetTrump();
-                        oppositeTrump = gameDataManager.GetOppositeTrump();
+                        givingCard3 = card;
+                        givingCard3Suit = (int)givingCard3.Suit;
+                        givingCard3Rank = (int)givingCard3.Rank;
+                        givingCard3.OnSelected(true);
+                        netCode.NotifyHostPlayer3CardsSelected(givingCard1.byteValue, givingCard2.byteValue, givingCard3.byteValue);
+                        givingCard1 = null;
+                        givingCard2 = null;
+                        givingCard3 = null;
+                    }
+                }
+                else if (gameState == GameState.SelectCardsToRemove)
+                {
+                    if (card == givingCard1)
+                    {
+                        givingCard1.OnSelected(false);
+                        givingCard1 = null;
+                        givingCard1Rank = 0;
+                        givingCard1Suit = 0;
 
-                        bool playerHasNoLedSuit = CheckPlayerHand(currentPlayer, ledSuit, trump, oppositeTrump);
+                    }
+                    else if (card == givingCard2)
+                    {
+                        givingCard2.OnSelected(false);
+                        givingCard2 = null;
+                        givingCard2Rank = 0;
+                        givingCard2Suit = 0;
+                    }
+                    else if (givingCard1 == null)
+                    {
+                        givingCard1 = card;
+                        givingCard1Suit = (int)givingCard1.Suit;
+                        givingCard1Rank = (int)givingCard1.Rank;
+                        givingCard1.OnSelected(true);
+                    }
+                    else if (givingCard2 == null)
+                    {
+                        givingCard2 = card;
+                        givingCard2Suit = (int)givingCard2.Suit;
+                        givingCard2Rank = (int)givingCard2.Rank;
+                        givingCard2.OnSelected(true);
+                    }
+                    else
+                    {
+                        givingCard3 = card;
+                        givingCard3Suit = (int)givingCard3.Suit;
+                        givingCard3Rank = (int)givingCard3.Rank;
+                        givingCard3.OnSelected(true);
+                        netCode.NotifyHostPlayer3CardsSelected(givingCard1.byteValue, givingCard2.byteValue, givingCard3.byteValue);
+                        givingCard1 = null;
+                        givingCard2 = null;
+                        givingCard3 = null;
+                    }
+                }
+                else if (gameState == GameState.TurnSelectingCard)
+                {
+                    actionCount = gameDataManager.GetActionCount();
 
-                        Card checkCard = card;
-
-                        if (playerHasNoLedSuit)
+                    if (card.OwnerId == currentPlayer.PlayerId)
+                    {
+                        if (actionCount == 4 || actionCount == 0)
                         {
-                            Debug.Log("FS2");
                             if (selectedCard != null)
                             {
-
                                 selectedCard.OnSelected(false);
                                 selectedSuit = 0;
                                 selectedRank = 0;
@@ -2134,20 +2194,28 @@ namespace Hasenpfeffer
                             selectedCard = card;
                             selectedSuit = (int)selectedCard.Suit;
                             selectedRank = (int)selectedCard.Rank;
+                            alreadyplayed = true;
                             netCode.NotifyHostPlayerCardPlayed(selectedCard.byteValue);
                             selectedCard = null;
                             SetMessage($"");
                         }
-                        else if ((int)checkCard.Suit == ledSuit || (ledSuit == trump && (int)checkCard.Suit == oppositeTrump && (int)checkCard.Rank == 3))
+                        else
                         {
-                            if (ledSuit == oppositeTrump && (int)checkCard.Suit == oppositeTrump && (int)checkCard.Rank == 3)
+                            Debug.Log("not leading");
+                            ledSuit = gameDataManager.GetLedSuit();
+                            trump = gameDataManager.GetTrump();
+                            oppositeTrump = gameDataManager.GetOppositeTrump();
+
+                            bool playerHasNoLedSuit = CheckPlayerHand(currentPlayer, ledSuit, trump, oppositeTrump);
+
+                            Card checkCard = card;
+
+                            if (playerHasNoLedSuit)
                             {
-                                SetMessage($"You must follow suit.");
-                            }
-                            else
-                            {
+                                Debug.Log("FS2");
                                 if (selectedCard != null)
                                 {
+
                                     selectedCard.OnSelected(false);
                                     selectedSuit = 0;
                                     selectedRank = 0;
@@ -2156,22 +2224,47 @@ namespace Hasenpfeffer
                                 selectedCard = card;
                                 selectedSuit = (int)selectedCard.Suit;
                                 selectedRank = (int)selectedCard.Rank;
+                                alreadyplayed = true;
                                 netCode.NotifyHostPlayerCardPlayed(selectedCard.byteValue);
                                 selectedCard = null;
                                 SetMessage($"");
                             }
-                        }
-                        else
-                        {
-                            if (selectedCard != null)
+                            else if ((int)checkCard.Suit == ledSuit || (ledSuit == trump && (int)checkCard.Suit == oppositeTrump && (int)checkCard.Rank == 3))
                             {
-                                selectedCard.OnSelected(false);
-                                selectedSuit = 0;
-                                selectedRank = 0;
-                                selectedCard = null;
-                            }
+                                if (ledSuit == oppositeTrump && (int)checkCard.Suit == oppositeTrump && (int)checkCard.Rank == 3)
+                                {
+                                    SetMessage($"You must follow suit.");
+                                }
+                                else
+                                {
+                                    if (selectedCard != null)
+                                    {
+                                        selectedCard.OnSelected(false);
+                                        selectedSuit = 0;
+                                        selectedRank = 0;
+                                    }
 
-                            SetMessage($"You must follow suit.");
+                                    selectedCard = card;
+                                    selectedSuit = (int)selectedCard.Suit;
+                                    selectedRank = (int)selectedCard.Rank;
+                                    alreadyplayed = true;
+                                    netCode.NotifyHostPlayerCardPlayed(selectedCard.byteValue);
+                                    selectedCard = null;
+                                    SetMessage($"");
+                                }
+                            }
+                            else
+                            {
+                                if (selectedCard != null)
+                                {
+                                    selectedCard.OnSelected(false);
+                                    selectedSuit = 0;
+                                    selectedRank = 0;
+                                    selectedCard = null;
+                                }
+
+                                SetMessage($"You must follow suit.");
+                            }
                         }
                     }
                 }
@@ -2251,7 +2344,7 @@ namespace Hasenpfeffer
                 gameState = gameDataManager.GetGameState();
                 currentPlayer = gameDataManager.GetCurrentPlayer();
 
-                if (gameState > GameState.DealingCards)
+                if (gameState > GameState.GameStarted)
                 {
                     Debug.Log("Restore the game state");
 
@@ -2267,6 +2360,7 @@ namespace Hasenpfeffer
                     Debug.Log("Going to gameflow");
 
                     GameFlow();
+                    netCode.NotifyHostPlayerReady();
                 }
             }
         }
@@ -2283,10 +2377,28 @@ namespace Hasenpfeffer
 
         public void OnGameDataChanged(EncryptedData encryptedData)
         {
+            StartCoroutine(OnGameDataChangedCoroutine(encryptedData));
+        }
+
+        public IEnumerator OnGameDataChangedCoroutine(EncryptedData encryptedData)
+        {
             gameDataManager.ApplyEncrptedData(encryptedData);
             gameState = gameDataManager.GetGameState();
             currentPlayer = gameDataManager.GetCurrentPlayer();
-            GameFlow();
+            if (NetworkClient.Instance.IsHost)
+            {
+                Debug.Log(System.DateTime.Now);
+                yield return StartCoroutine(CheckAllPlayersReady());
+                Debug.Log(System.DateTime.Now);
+                UnreadyPlayers();
+                GameFlow();
+            }
+            else
+            {
+                Debug.Log("Notify");
+                GameFlow();
+                netCode.NotifyHostPlayerReady();
+            }
         }
 
         public void OnGameStateChanged()
@@ -2446,6 +2558,30 @@ namespace Hasenpfeffer
                 gameDataManager.SetCurrentPlayer(currentPlayer);
                 gameDataManager.SetGameState(gameState);
                 netCode.ModifyGameData(gameDataManager.EncryptedData());
+            }
+        }
+
+        public void OnPlayerReady()
+        { 
+            if (NetworkClient.Instance.IsHost)
+            {
+                if (player1ready == false)
+                {
+                    player1ready = true;
+                }
+                else if (player2ready == false)
+                {
+                    player2ready = true;
+                }
+                else if (player3ready == false)
+                {
+                    player3ready = true;
+                }
+
+                if (player1ready && player2ready && player3ready)
+                {
+                    AllPlayersReady = true;
+                }
             }
         }
 

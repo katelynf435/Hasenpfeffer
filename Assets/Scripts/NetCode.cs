@@ -54,6 +54,8 @@ namespace Hasenpfeffer
 
         public UnityEvent OnLeftRoom = new UnityEvent();
 
+        public UnityEvent OnPlayerReady = new UnityEvent();
+
         RoomPropertyAgent roomPropertyAgent;
         RoomRemoteEventAgent roomRemoteEventAgent;
 
@@ -63,6 +65,7 @@ namespace Hasenpfeffer
         const string TRUMP_SELECTED = "TrumpSelected";
         const string CARD_PLAYED = "CardPlayed";
         const string THREE_CARDS_SELECTED = "ThreeCardsSelected";
+        const string PLAYER_READY = "PlayerReady";
 
         public void ModifyGameData(EncryptedData encryptedData)
         {
@@ -108,6 +111,11 @@ namespace Hasenpfeffer
             message.Push(card2);
             message.Push(card3);
             roomRemoteEventAgent.Invoke(THREE_CARDS_SELECTED, message);
+        }
+
+        public void NotifyHostPlayerReady()
+        {
+            roomRemoteEventAgent.Invoke(PLAYER_READY);
         }
 
         public void EnableRoomPropertyAgent()
@@ -182,18 +190,15 @@ namespace Hasenpfeffer
 
         public void On3CardsSelectedRemoteEvent(SWNetworkMessage message)
         {
-            /*    int intCard1Rank = message.PopInt32();
-                int intCard1Suit = message.PopInt32();
-                int intCard2Rank = message.PopInt32();
-                int intCard2Suit = message.PopInt32();
-                int intCard3Rank = message.PopInt32();
-                int intCard3Suit = message.PopInt32();
-                int intstring = int.Parse(intCard1Rank.ToString() + intCard1Suit.ToString() + intCard2Rank.ToString() + intCard2Suit.ToString() + intCard3Rank.ToString() + intCard3Suit.ToString());
-                */
             byte card1 = message.PopByte();
             byte card2 = message.PopByte();
             byte card3 = message.PopByte();
             On3CardsSelected.Invoke(card1, card2, card3);
+        }
+
+        public void OnPlayerReadyEvent()
+        {
+            OnPlayerReady.Invoke();
         }
     }
 }

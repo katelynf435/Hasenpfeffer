@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using UnityEngine.U2D;
 using UnityEngine.SceneManagement;
 using SWNetwork;
+using Unity.Networking.Transport;
 
 namespace Hasenpfeffer
 {
@@ -32,8 +33,8 @@ namespace Hasenpfeffer
 
 		[SerializeField] private Button SelectTeamOne = null;
 		[SerializeField] private Button SelectTeamTwo = null;
-		[SerializeField] private Button NicknameOk = null;
-		[SerializeField] private Button RegionOk = null;
+		[SerializeField] private Button ConnectButton = null;
+		[SerializeField] private Button HostButton = null;
 		[SerializeField] private Button StartButton = null;
 
 		[SerializeField] private InputField NicknameInputField = null;
@@ -51,6 +52,9 @@ namespace Hasenpfeffer
 		[SerializeField] private Image TeamTwoFirstWSI = null;
 		[SerializeField] private Image TeamTwoSecondWSI = null;
 
+		public Server server;
+		public Client client;
+
 		public Dropdown gameRegionDrowDown;
 
 		public string LobbyName = "EURO";
@@ -62,18 +66,22 @@ namespace Hasenpfeffer
 		RoomCustomData roomData_;
 
 		string playerName_;
+		int playerId = -1;
+		int myPlayerId;
 
 		TextInfo myTI = new CultureInfo("en-US", false).TextInfo;
 
 		// Start is called before the first frame update
-		void Start()
+		void Awake()
 		{
-			NetworkClient.Lobby.OnLobbyConnectedEvent += OnLobbyConnected;
-			NetworkClient.Lobby.OnNewPlayerJoinRoomEvent += OnNewPlayerJoinRoomEvent;
-			NetworkClient.Lobby.OnPlayerLeaveRoomEvent += OnPlayerLeaveRoomEvent;
-			NetworkClient.Lobby.OnRoomReadyEvent += OnRoomReadyEvent;
-			NetworkClient.Lobby.OnRoomCustomDataChangeEvent += OnRoomCustomDataChangeEvent;
-			NetworkClient.Lobby.OnRoomMessageEvent += OnRoomMessageEvent;
+			//NetworkClient.Lobby.OnLobbyConnectedEvent += OnLobbyConnected;
+			//NetworkClient.Lobby.OnNewPlayerJoinRoomEvent += OnNewPlayerJoinRoomEvent;
+			//NetworkClient.Lobby.OnPlayerLeaveRoomEvent += OnPlayerLeaveRoomEvent;
+			//NetworkClient.Lobby.OnRoomReadyEvent += OnRoomReadyEvent;
+			//NetworkClient.Lobby.OnRoomCustomDataChangeEvent += OnRoomCustomDataChangeEvent;
+			//NetworkClient.Lobby.OnRoomMessageEvent += OnRoomMessageEvent;
+
+			RegisterEvents();
 
 			NicknameInputField.Select();
 			NicknameInputField.ActivateInputField();
@@ -91,31 +99,81 @@ namespace Hasenpfeffer
 			NetworkClient.Lobby.OnRoomReadyEvent -= OnRoomReadyEvent;
 			NetworkClient.Lobby.OnRoomCustomDataChangeEvent -= OnRoomCustomDataChangeEvent;
 			NetworkClient.Lobby.OnRoomMessageEvent -= OnRoomMessageEvent;
+
+			server.Shutdown();
+			client.Shutdown();
 		}
 
 		private void Update()
 		{
 			if (NicknameInputField.text != "")
 			{
-				NicknameOk.interactable = true;
+				ConnectButton.interactable = true;
+				HostButton.interactable = true;
 
 				if (Input.GetKeyDown(KeyCode.Return))
 				{
-					NicknameOk.onClick.Invoke();
+					ConnectButton.onClick.Invoke();
 				}
 			}
 
-			if (NetworkClient.Lobby.IsOwner)
-			{
-				if (roomData_.team1.players.Count == 2 && roomData_.team2.players.Count == 2)
-				{
-					StartButton.interactable = true;
-				}
-				else
-				{
-					StartButton.interactable = false;
-				}
-			}
+			//if (NetworkClient.Lobby.IsOwner)
+			//{
+			//	if (roomData_.team1.players.Count == 2 && roomData_.team2.players.Count == 2)
+			//	{
+			//		StartButton.interactable = true;
+			//	}
+			//	else
+			//	{
+			//		StartButton.interactable = false;
+			//	}
+			//}
+		}
+
+		private void RegisterEvents()
+		{
+			NetUtility.S_WELCOME += OnWelcomeServer;
+			NetUtility.S_SEND_NAME += OnSendNameServer;
+
+			NetUtility.C_WELCOME += OnWelcomeClient;
+			NetUtility.C_SEND_NAME += OnSendNameClient;
+		}
+		private void UnregisterEvents()
+		{
+			NetUtility.S_WELCOME -= OnWelcomeServer;
+			NetUtility.S_SEND_NAME -= OnSendNameServer;
+		}
+		private void OnSendNameServer(NetMessage msg, NetworkConnection cnn)
+		{
+			NetSendName sn = msg as NetSendName;
+
+			Server.Instance.SendToClient(cnn, sn);
+		}
+
+		private void OnWelcomeServer(NetMessage msg, NetworkConnection cnn)
+		{
+			NetWelcome nw = msg as NetWelcome;
+
+			Debug.Log("Player joined room");
+
+			nw.PlayerId = ++playerId;
+			
+			Server.Instance.SendToClient(cnn, nw);
+			Debug.Log("Player id is " + playerId);
+		}
+
+		//Client
+		private void OnWelcomeClient(NetMessage msg)
+		{
+			NetWelcome nw = msg as NetWelcome;
+
+			myPlayerId = nw.PlayerId;
+
+			Debug.Log($"My playerid is {nw.PlayerId}");
+		}
+		private void OnSendNameClient(NetMessage msg)
+		{
+			Debug.Log($"In name");
 		}
 
 		//****************** Matchmaking *********************//
@@ -191,17 +249,20 @@ namespace Hasenpfeffer
 
 			for (int i = 0; i < NetworkClient.Instance.AvailableNodeRegions.Length; i++)
 			{
-				NodeRegion nodeRegion = NetworkClient.Instance.AvailableNodeRegions[i];
+				NodeRegion nodeRegion1 = NetworkClient.Instance.AvailableNodeRegions[i];
 
-				if (nodeRegion.name.Equals(NetworkClient.Instance.NodeRegion))
+				if (nodeRegion1.name.Equals(NetworkClient.Instance.NodeRegion))
 				{
 					currentValue = i;
 				}
 
-				gameRegionDrowDown.options.Add(new Dropdown.OptionData(nodeRegion.description));
+				gameRegionDrowDown.options.Add(new Dropdown.OptionData(nodeRegion1.description));
 			}
 
 			gameRegionDrowDown.value = currentValue;
+
+			NodeRegion nodeRegion = NetworkClient.Instance.AvailableNodeRegions[currentValue];
+			NetworkClient.Instance.NodeRegion = nodeRegion.name;
 
 			gameRegionDrowDown.onValueChanged.AddListener(GameRegionChanged);
 		}
@@ -412,11 +473,30 @@ namespace Hasenpfeffer
 		/// <summary>
 		/// Ok button in the EnterNicknamePopover was clicked.
 		/// </summary>
-		public void OnConfirmNicknameClicked()
+		public void OnConnectClicked()
 		{
+			client.Init("127.0.0.1", 8007);
 			playerName_ = NicknameInputField.text;
 			playerName_ = myTI.ToTitleCase(playerName_);
-			Checkin();
+			//NetSendName sn = new NetSendName();
+			//sn.name = playerName_;
+			//Debug.Log("send name " + sn.name + " " + sn);
+			//Client.Instance.SendToServer(sn);
+			//Checkin();
+			EnterNicknamePanel.SetActive(false);
+		}
+
+		public void OnHostClicked()
+		{
+			server.Init(8007);
+			client.Init("127.0.0.1", 8007);
+			playerName_ = NicknameInputField.text;
+			playerName_ = myTI.ToTitleCase(playerName_);
+			//NetSendName sn = new NetSendName();
+			//sn.name = playerName_;
+			//Debug.Log("send name " + sn.name + " " + sn);
+			//Client.Instance.SendToServer(sn);
+			//Checkin();
 			EnterNicknamePanel.SetActive(false);
 		}
 
